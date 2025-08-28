@@ -5,6 +5,9 @@ import io
 
 st.set_page_config(layout="wide")
 
+# 🔄 Botón para reiniciar la app desde el sidebar
+st.sidebar.button("🔄 Reiniciar app", on_click=lambda: st.session_state.clear())
+
 st.title("Pegado de datos automatizado 📂")
 st.write("Sube tus archivos para pegar datos de la base a la plantilla.")
 
@@ -52,7 +55,8 @@ if st.button("Procesar y Pegar Datos"):
                     col_idx = headers_plantilla[col_plantilla]
                     datos = df_base[col_base].tolist()
                     for r, valor in enumerate(datos, start=int(start_row)):
-                        ws.cell(row=r, column=col_idx, value=valor)
+                        valor_final = "" if pd.isna(valor) else valor
+                        ws.cell(row=r, column=col_idx, value=valor_final)
 
                 # Guardar a memoria
                 output = io.BytesIO()
@@ -70,13 +74,16 @@ if st.button("Procesar y Pegar Datos"):
     else:
         st.error("❌ Por favor, sube ambos archivos y llena todos los campos.")
 
+# Placeholder para el botón de descarga
+descarga_placeholder = st.empty()
+
 # Mostrar botón de descarga si se procesó correctamente
 if st.session_state.procesado and st.session_state.output_file:
-    st.success(f"✅ ¡Pegado de {st.session_state.longitud_max} filas completado desde la fila {start_row}!")
-
-    st.download_button(
-        label="📥 Descargar archivo modificado",
-        data=st.session_state.output_file.getvalue(),
-        file_name="wb_modificado.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+    with descarga_placeholder:
+        st.success(f"✅ ¡Pegado de {st.session_state.longitud_max} filas completado desde la fila {start_row}!")
+        st.download_button(
+            label="📥 Descargar archivo modificado",
+            data=st.session_state.output_file.getvalue(),
+            file_name="wb_modificado.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
