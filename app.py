@@ -12,26 +12,33 @@ st.write("Sube tus archivos para pegar datos de la base a la plantilla.")
 uploaded_file_base = st.file_uploader("Sube tu archivo base (base_limpia.xlsx)", type=["xlsx"])
 uploaded_file_template = st.file_uploader("Sube tu archivo plantilla (wb.xlsx)", type=["xlsx"])
 
+# Campos para los nombres de las hojas y la fila de encabezados
+base_sheet_name = st.text_input("Nombre de la hoja de la base (donde se tomarán los datos)")
+template_sheet_name = st.text_input("Nombre de la hoja de la plantilla (donde se vaciarán los datos)")
+headers_row = st.number_input("Ingresa la fila de encabezados de la plantilla", min_value=1, value=1)
+
 # Campo para definir la fila de inicio
 start_row = st.number_input("Ingresa la fila de inicio para el pegado", min_value=1, value=3426)
 
 if st.button("Procesar y Pegar Datos"):
-    if uploaded_file_base and uploaded_file_template:
+    if uploaded_file_base and uploaded_file_template and base_sheet_name and template_sheet_name:
         try:
             # 1. Leer archivos desde la memoria
-            df_base = pd.read_excel(uploaded_file_base, engine="openpyxl")
+            df_base = pd.read_excel(uploaded_file_base, sheet_name=base_sheet_name, engine="openpyxl")
             wb = load_workbook(uploaded_file_template)
-            ws = wb["Workbook Consolidado"]
+            
+            # 2. Seleccionar la hoja de la plantilla
+            ws = wb[template_sheet_name]
     
-            # 2. Encabezados de la plantilla (fila 1)
-            headers_plantilla = {str(cell.value).strip(): cell.column for cell in ws[1] if cell.value}
+            # 3. Encabezados de la plantilla (fila de entrada del usuario)
+            headers_plantilla = {str(cell.value).strip(): cell.column for cell in ws[int(headers_row)] if cell.value}
     
-            # 3. Mapear columnas que coinciden
+            # 4. Mapear columnas que coinciden
             mapeo = {col: col for col in df_base.columns if col in headers_plantilla}
             if not mapeo:
                 st.error("Error: No hay coincidencia entre columnas de la base y la plantilla.")
             else:
-                # 4. Pegar datos desde la fila indicada
+                # 5. Pegar datos desde la fila indicada
                 longitud_max = len(df_base)
                 for col_base, col_plantilla in mapeo.items():
                     col_idx = headers_plantilla[col_plantilla]
@@ -39,7 +46,7 @@ if st.button("Procesar y Pegar Datos"):
                     for r, valor in enumerate(datos, start=int(start_row)):
                         ws.cell(row=r, column=col_idx, value=valor)
     
-                # 5. Guardar cambios en la memoria
+                # 6. Guardar cambios en la memoria
                 output = io.BytesIO()
                 wb.save(output)
     
@@ -54,8 +61,8 @@ if st.button("Procesar y Pegar Datos"):
                 )
     
         except KeyError as e:
-            st.error(f"Error: La hoja 'Workbook Consolidado' no se encontró en la plantilla. {e}")
+            st.error(f"Error: La hoja que buscas no se encontró. Verifica el nombre. {e}")
         except Exception as e:
             st.error(f"Ocurrió un error en el proceso: {e}")
     else:
-        st.error("Por favor, sube ambos archivos para continuar.")
+        st.error("Por favor, sube ambos archivos y llena todos los campos.")
