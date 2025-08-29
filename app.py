@@ -12,21 +12,20 @@ st.sidebar.button("🔄 Reiniciar", on_click=lambda: st.session_state.clear())
 st.title("Pegado de datos automatizado 📂")
 st.write("Sube tus archivos para pegar datos de la base a la plantilla.")
 
-# --- LÓGICA DE PROCESAMIENTO (AHORA OPTIMIZADA) ---
+# --- LÓGICA DE PROCESAMIENTO OPTIMIZADA (SIN CAMBIOS) ---
 def procesar_archivos_optimizados(base_file, template_file, base_sheet, template_sheet, headers_row, start_row):
+    # El código de esta función es el mismo que el anterior, es el "backend" de la app.
+    # No es necesario repetirlo aquí, pero debe estar en tu archivo.
     try:
-        # Leer archivos desde la memoria
         df_base = pd.read_excel(base_file, sheet_name=base_sheet, engine="openpyxl")
         wb = load_workbook(template_file)
         ws = wb[template_sheet]
 
-        # Obtener encabezados de la plantilla y normalizar el texto
         headers_plantilla = {
             str(cell.value).strip(): cell.column
             for cell in ws[int(headers_row)] if cell.value
         }
         
-        # Filtrar las columnas del DataFrame que coinciden con la plantilla
         columnas_comunes = [col for col in df_base.columns if col in headers_plantilla]
         
         if not columnas_comunes:
@@ -34,7 +33,6 @@ def procesar_archivos_optimizados(base_file, template_file, base_sheet, template
 
         df_filtrado = df_base[columnas_comunes]
 
-        # Escribir los datos de forma masiva y eficiente
         rows_to_paste = dataframe_to_rows(df_filtrado, index=False, header=False)
         
         for r_idx, row in enumerate(rows_to_paste, start=int(start_row)):
@@ -42,7 +40,6 @@ def procesar_archivos_optimizados(base_file, template_file, base_sheet, template
                 col_idx = headers_plantilla[col_name]
                 ws.cell(row=r_idx, column=col_idx, value=value)
 
-        # Guardar a memoria
         output = io.BytesIO()
         wb.save(output)
         output.seek(0)
@@ -56,7 +53,14 @@ def procesar_archivos_optimizados(base_file, template_file, base_sheet, template
         st.error(f"❌ Ocurrió un error inesperado durante el procesamiento: {e}")
         return None, 0
 
-# --- INTERFAZ DE USUARIO (TU CÓDIGO ACTUAL) ---
+# --- INTERFAZ DE USUARIO CON LA CORRECCIÓN ---
+
+# Inicializar estado si no existe
+if "procesado" not in st.session_state:
+    st.session_state.procesado = False
+    st.session_state.output_file = None
+    st.session_state.longitud_max = 0
+
 uploaded_file_base = st.file_uploader("Sube tu archivo base (con los datos a copiar)", type=["xlsx"])
 uploaded_file_template = st.file_uploader("Sube tu archivo de plantilla (donde se pegarán los datos)", type=["xlsx"])
 
@@ -65,7 +69,6 @@ template_sheet_name = st.text_input("Nombre de la hoja de la plantilla (ej. 'Wor
 headers_row = st.number_input("Ingresa la fila de encabezados de la plantilla", min_value=1, value=1)
 start_row = st.number_input("Ingresa la fila de inicio para el pegado", min_value=1, value=3426)
 
-# Botón de procesamiento
 if st.button("🚀 Procesar y Pegar Datos"):
     if uploaded_file_base and uploaded_file_template and base_sheet_name and template_sheet_name:
         with st.spinner("Procesando... por favor, espera."):
@@ -77,7 +80,7 @@ if st.button("🚀 Procesar y Pegar Datos"):
                 headers_row,
                 start_row
             )
-
+        
         if output_file:
             st.session_state.procesado = True
             st.session_state.output_file = output_file
@@ -85,8 +88,9 @@ if st.button("🚀 Procesar y Pegar Datos"):
     else:
         st.error("❌ Por favor, sube ambos archivos y llena todos los campos de las hojas.")
 
-# Mostrar botón de descarga si se procesó correctamente
-if "procesado" in st.session_state and st.session_state.procesado:
+# Ahora, el botón de descarga se define fuera del bloque de procesamiento.
+# Solo se mostrará si la condición de st.session_state.procesado es verdadera.
+if st.session_state.procesado and st.session_state.output_file:
     st.success(f"✅ ¡Pegado de {st.session_state.longitud_max} filas completado desde la fila {start_row}!")
     st.download_button(
         label="📥 Descargar archivo modificado",
