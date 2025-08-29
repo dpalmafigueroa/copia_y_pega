@@ -3,6 +3,7 @@ import pandas as pd
 from openpyxl import load_workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 import io
+import base64
 
 st.set_page_config(layout="wide")
 
@@ -74,11 +75,9 @@ if submit_button:
         
         if output_file:
             st.success(f"✅ ¡Pegado de {longitud_max} filas completado desde la fila {start_row}!")
-            st.download_button(
-                label="📥 Descargar archivo modificado",
-                data=output_file,
-                file_name="wb_modificado.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+            # Convertir el archivo a base64 y crear un enlace HTML de descarga
+            b64 = base64.b64encode(output_file.getvalue()).decode()
+            href = f'<a href="data:application/octet-stream;base64,{b64}" download="wb_modificado.xlsx">📥 Descargar archivo modificado</a>'
+            st.markdown(href, unsafe_allow_html=True)
     else:
         st.error("❌ Por favor, sube ambos archivos y llena todos los campos de las hojas.")
