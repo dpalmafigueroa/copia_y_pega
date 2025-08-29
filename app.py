@@ -48,11 +48,7 @@ def procesar_archivos_optimizados(base_file, template_file, base_sheet, template
         st.error(f"❌ Ocurrió un error inesperado durante el procesamiento: {e}")
         return None, 0
 
----
-
-## Interfaz de Usuario sin Reinicio de Estado
-
-```python
+# --- INTERFAZ DE USUARIO CON UN BOTÓN ÚNICO ---
 with st.form(key='my_form'):
     uploaded_file_base = st.file_uploader("Sube tu archivo base (con los datos a copiar)", type=["xlsx"])
     uploaded_file_template = st.file_uploader("Sube tu archivo de plantilla (donde se pegarán los datos)", type=["xlsx"])
