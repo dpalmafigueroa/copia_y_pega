@@ -6,16 +6,14 @@ import io
 
 st.set_page_config(layout="wide")
 
-# 🔄 Botón para reiniciar la app desde el sidebar
+# Botón para reiniciar la app desde el sidebar
 st.sidebar.button("🔄 Reiniciar", on_click=lambda: st.session_state.clear())
 
 st.title("Pegado de datos automatizado 📂")
 st.write("Sube tus archivos para pegar datos de la base a la plantilla.")
 
-# --- LÓGICA DE PROCESAMIENTO OPTIMIZADA (SIN CAMBIOS) ---
+# --- LÓGICA DE PROCESAMIENTO (LA FUNCIÓN QUE HACE EL TRABAJO PESADO) ---
 def procesar_archivos_optimizados(base_file, template_file, base_sheet, template_sheet, headers_row, start_row):
-    # El código de esta función es el mismo que el anterior, es el "backend" de la app.
-    # No es necesario repetirlo aquí, pero debe estar en tu archivo.
     try:
         df_base = pd.read_excel(base_file, sheet_name=base_sheet, engine="openpyxl")
         wb = load_workbook(template_file)
@@ -88,8 +86,7 @@ if st.button("🚀 Procesar y Pegar Datos"):
     else:
         st.error("❌ Por favor, sube ambos archivos y llena todos los campos de las hojas.")
 
-# Ahora, el botón de descarga se define fuera del bloque de procesamiento.
-# Solo se mostrará si la condición de st.session_state.procesado es verdadera.
+# El botón de descarga se muestra solo si la variable de estado es verdadera
 if st.session_state.procesado and st.session_state.output_file:
     st.success(f"✅ ¡Pegado de {st.session_state.longitud_max} filas completado desde la fila {start_row}!")
     st.download_button(
