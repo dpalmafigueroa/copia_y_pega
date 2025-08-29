@@ -12,7 +12,7 @@ st.sidebar.button("🔄 Reiniciar", on_click=lambda: st.session_state.clear())
 st.title("Pegado de datos automatizado 📂")
 st.write("Sube tus archivos para pegar datos de la base a la plantilla.")
 
-# --- LÓGICA DE PROCESAMIENTO (LA FUNCIÓN QUE HACE EL TRABAJO PESADO) ---
+# --- LÓGICA DE PROCESAMIENTO ---
 def procesar_archivos_optimizados(base_file, template_file, base_sheet, template_sheet, headers_row, start_row):
     try:
         df_base = pd.read_excel(base_file, sheet_name=base_sheet, engine="openpyxl")
@@ -51,23 +51,27 @@ def procesar_archivos_optimizados(base_file, template_file, base_sheet, template
         st.error(f"❌ Ocurrió un error inesperado durante el procesamiento: {e}")
         return None, 0
 
-# --- INTERFAZ DE USUARIO CON LA CORRECCIÓN ---
+# --- INTERFAZ DE USUARIO DENTRO DE UN FORMULARIO ---
+with st.form(key='my_form'):
+    # Inicializar estado si no existe (esto va fuera del formulario)
+    if "procesado" not in st.session_state:
+        st.session_state.procesado = False
+        st.session_state.output_file = None
+        st.session_state.longitud_max = 0
 
-# Inicializar estado si no existe
-if "procesado" not in st.session_state:
-    st.session_state.procesado = False
-    st.session_state.output_file = None
-    st.session_state.longitud_max = 0
+    uploaded_file_base = st.file_uploader("Sube tu archivo base (con los datos a copiar)", type=["xlsx"])
+    uploaded_file_template = st.file_uploader("Sube tu archivo de plantilla (donde se pegarán los datos)", type=["xlsx"])
 
-uploaded_file_base = st.file_uploader("Sube tu archivo base (con los datos a copiar)", type=["xlsx"])
-uploaded_file_template = st.file_uploader("Sube tu archivo de plantilla (donde se pegarán los datos)", type=["xlsx"])
+    base_sheet_name = st.text_input("Nombre de la hoja de la base (ej. 'Sheet1')", value="Sheet1")
+    template_sheet_name = st.text_input("Nombre de la hoja de la plantilla (ej. 'Workbook Consolidado')", value="Workbook Consolidado")
+    headers_row = st.number_input("Ingresa la fila de encabezados de la plantilla", min_value=1, value=1)
+    start_row = st.number_input("Ingresa la fila de inicio para el pegado", min_value=1, value=3426)
+    
+    # El botón de procesamiento debe estar DENTRO del formulario
+    submit_button = st.form_submit_button("🚀 Procesar y Pegar Datos")
 
-base_sheet_name = st.text_input("Nombre de la hoja de la base (ej. 'Sheet1')", value="Sheet1")
-template_sheet_name = st.text_input("Nombre de la hoja de la plantilla (ej. 'Workbook Consolidado')", value="Workbook Consolidado")
-headers_row = st.number_input("Ingresa la fila de encabezados de la plantilla", min_value=1, value=1)
-start_row = st.number_input("Ingresa la fila de inicio para el pegado", min_value=1, value=3426)
-
-if st.button("🚀 Procesar y Pegar Datos"):
+# --- LÓGICA DE EJECUCIÓN (AHORA SE ACTIVA CON EL BOTÓN DEL FORMULARIO) ---
+if submit_button:
     if uploaded_file_base and uploaded_file_template and base_sheet_name and template_sheet_name:
         with st.spinner("Procesando... por favor, espera."):
             output_file, longitud_max = procesar_archivos_optimizados(
